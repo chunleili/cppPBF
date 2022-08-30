@@ -58,8 +58,7 @@ private:
     float cellSizeInv = 1.0/2.51;
     struct Cell
     {
-        int id;
-        int x=0,y=0,z=0;
+        int x,y,z;
         std::vector<int> parInCell; 
     };
     std::vector<Cell>  cell;
@@ -78,14 +77,16 @@ public:
             initCube();
         }
 
-        for (size_t step = 0; step < 1; step++)
+        for (size_t step = 0; step < 3; step++)
         {
             preSolve();
             for (size_t i = 0; i < numSubsteps; i++)
                 solve(); 
             postSolve();  
         }
-        printToFile(pos,"pos.txt");
+        printVectorField(pos,"pos.txt");
+        printScalarField(lambda, "lambda.txt");
+        printVectorField(neighborList, "neighborList.txt");
     }
 };
 
@@ -139,19 +140,11 @@ void PBF::initData()
     cell.resize(numCell);
     for (size_t i = 0; i < numCell; i++)
     {
-        cell[i].id = i;
-        
         //to calculate the x y z coord of cell
-        int numPerRow = numCellXYZ[0];
-        int numPerFloor = numCellXYZ[0] * numCellXYZ[1];
-
-        int floor = (i / numPerFloor);
-        int row = (i % numPerFloor) / numPerRow;
-        int col = (i % numPerFloor) % numPerRow; 
-        
-        cell[i].z = floor;
-        cell[i].y = row;
-        cell[i].x = col;
+        vec3i xyz = cellID2XYZ(i);
+        cell[i].x = xyz[0];
+        cell[i].y = xyz[1];
+        cell[i].z = xyz[2];
 
         cell[i].parInCell.reserve(10); //pre-allocate memory to speed up
     }
@@ -164,21 +157,22 @@ void PBF::initData()
 
 void PBF::preSolve()
 {
-    oldPos = pos;
+    for (int i = 0; i < numParticles; i++)
+        oldPos[i] = pos[i];
 
     for (int i = 0; i < numParticles; i++)
     {
-        vel[i] += g * dt;
-        pos[i] += vel[i] * dt;
+        vec3f tempVel = vel[i];
+        tempVel += g * dt;
+        pos[i] += tempVel * dt;
         beBounded(pos[i]);
     }
 
     //clear parInCell and neighborList
     for (size_t i = 0; i < numCell; i++)
-    {
         cell[i].parInCell.clear();
+    for (size_t i = 0; i < numParticles; i++)
         neighborList[i].clear();
-    }
     
     //update the parInCell list
     vec3i cellXYZ;
@@ -217,10 +211,6 @@ void PBF::preSolve()
                     }
                 }  
     }
-    // printToFile(neighborList, "neighborList.txt");
-    // print(cell[1174].parInCell, 99999, false, "cell[1174].parInCell= ");
-    // print(cellID2XYZ(1174),99999,false, "cellID2XYZ(1174) = ");
-    
 }
 
 inline bool PBF::isInCell(const vec3i& cell)
@@ -317,7 +307,6 @@ void PBF::solve()
         float lambdaEpsilon = 100.0; // to prevent the singularity
         lambda[i] = (-densityCons) / (sumSqr + lambdaEpsilon);
     }
-    // print(lambda, 999999, true, "\n", "lambda.txt");
 
     //calculate the dpos(delta_pos)
     for (size_t i = 0; i < numParticles; i++)
@@ -338,7 +327,6 @@ void PBF::solve()
 
     for (size_t i = 0; i < numParticles; i++)
         pos[i] += dpos[i];
-    // printToFile(dpos, "dpos.txt");
 }
 
 //helper for solve()

@@ -6,7 +6,7 @@
 #include <iomanip> 
 
 template<typename T>
-void print(T contents, int maxTimes=20, bool toFile=false, std::string msg="", std::string fileName="debugOutput.txt")
+void printVector(T contents, int maxTimes=20, bool toFile=false, std::string msg="", std::string fileName="debugOutput.txt")
 {
     static int times = 0;
     times++;
@@ -35,7 +35,7 @@ void print(T contents, int maxTimes=20, bool toFile=false, std::string msg="", s
 }
 
 template<typename T>
-void printToFile(T content, std::string fileName)
+void printVectorField(T content, std::string fileName)
 {
     std::ofstream f;
     f.open(fileName);
@@ -43,6 +43,19 @@ void printToFile(T content, std::string fileName)
     {
         for(const auto& xx:x)
             f<<std::fixed <<std::setprecision(8)<<xx<<"\t";
+        f<<"\n";
+    } 
+    f.close();
+}
+
+template<typename T>
+void printScalarField(T content, std::string fileName)
+{
+    std::ofstream f;
+    f.open(fileName);
+    for(const auto& x:content)
+    {
+        f<<std::fixed <<std::setprecision(8)<<x<<"\t";
         f<<"\n";
     } 
     f.close();
