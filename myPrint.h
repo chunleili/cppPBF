@@ -42,9 +42,9 @@ void printToFile(T content, std::string fileName)
     for(const auto& x:content)
     {
         for(const auto& xx:x)
-            f<<setprecio<<xx<<"\t";
+            f<<std::fixed <<std::setprecision(8)<<xx<<"\t";
         f<<"\n";
-    }
+    } 
     f.close();
 }
 
