@@ -1,0 +1,7 @@
+*
+!*.vtk
+!*.h
+!*.hpp
+!*.cpp
+!CMakeLists.txt
+!.gitignore
