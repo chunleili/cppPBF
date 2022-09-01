@@ -6,6 +6,14 @@
 
 using namespace zeno;
 
+void test(
+    const std::vector<std::vector<int>> &neighborList,
+    const std::vector<vec3f> &pos,
+    std::vector<vec3f> &dpos
+);
+
+#include "test_solve.h"
+
 struct PBF {
 //physical params
 public:    
@@ -72,6 +80,8 @@ private:
     std::vector<std::vector<int>> neighborList;
 
 public:
+    void testScorr();
+
     void apply() {
         static bool firstTime = true;
         if(firstTime == true)
@@ -86,9 +96,12 @@ public:
         {
             // echo(step);
             preSolve();
-            for (size_t i = 0; i < numSubsteps; i++)
+            // for (size_t i = 0; i < 2; i++)
                 solve(); 
+                // solve();
+                test(neighborList,pos,dpos);
             postSolve();  
+            debugPrint();
         }
 
     }
@@ -305,7 +318,7 @@ void PBF::solve()
         pos[i] += dpos[i];
     
     std::cout<<"step="<<step<<"\n";
-    printVector(dpos[21],16);
+    printVector(dpos[22],16);
 }
 
 void PBF::computeLambda()
@@ -411,7 +424,6 @@ void PBF::postSolve()
 
 int main(){
     PBF o;
-    // for(int i = 0; i < 10; i++)
     o.apply();
     return 0;
 }
