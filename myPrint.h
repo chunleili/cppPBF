@@ -17,7 +17,7 @@ void printVector(T contents, int precision=8, int maxTimes=20,  std::string msg=
     {
         std::cout<<msg;
         for(auto x:contents)
-            std::cout<<x<<std::fixed <<std::setprecision(precision)<<"\t";
+            std::cout<<std::fixed <<std::setprecision(precision)<<x<<"\t";
         std::cout<<"\n";
         return;
     }
@@ -27,7 +27,7 @@ void printVector(T contents, int precision=8, int maxTimes=20,  std::string msg=
         fout.open(fileName, std::ios::app);
         fout<<msg;
         for(const auto& x:contents)
-            fout<<x<<std::fixed <<std::setprecision(precision)<<"\t";
+            fout<<std::fixed <<std::setprecision(precision)<<x<<"\t";
         fout<<"\n";
         fout.close();
         return;
