@@ -6,7 +6,7 @@
 #include <iomanip> 
 
 template<typename T>
-void printVector(T contents, int maxTimes=20, bool toFile=false, std::string msg="", std::string fileName="debugOutput.txt")
+void printVector(T contents, int precision=8, int maxTimes=20,  std::string msg="", bool toFile=false, std::string fileName="debugOutput.txt")
 {
     static int times = 0;
     times++;
@@ -17,7 +17,7 @@ void printVector(T contents, int maxTimes=20, bool toFile=false, std::string msg
     {
         std::cout<<msg;
         for(auto x:contents)
-            std::cout<<x<<"\t";
+            std::cout<<x<<std::fixed <<std::setprecision(precision)<<"\t";
         std::cout<<"\n";
         return;
     }
@@ -27,7 +27,7 @@ void printVector(T contents, int maxTimes=20, bool toFile=false, std::string msg
         fout.open(fileName, std::ios::app);
         fout<<msg;
         for(const auto& x:contents)
-            fout<<x<<"\t";
+            fout<<x<<std::fixed <<std::setprecision(precision)<<"\t";
         fout<<"\n";
         fout.close();
         return;
@@ -35,27 +35,27 @@ void printVector(T contents, int maxTimes=20, bool toFile=false, std::string msg
 }
 
 template<typename T>
-void printVectorField(T content, std::string fileName)
+void printVectorField(T content, std::string fileName, size_t precision=8)
 {
     std::ofstream f;
     f.open(fileName);
     for(const auto& x:content)
     {
         for(const auto& xx:x)
-            f<<std::fixed <<std::setprecision(8)<<xx<<"\t";
+            f<<std::fixed <<std::setprecision(precision)<<xx<<"\t";
         f<<"\n";
     } 
     f.close();
 }
 
 template<typename T>
-void printScalarField(T content, std::string fileName)
+void printScalarField(T content, std::string fileName, size_t precision=8)
 {
     std::ofstream f;
     f.open(fileName);
     for(const auto& x:content)
     {
-        f<<std::fixed <<std::setprecision(8)<<x<<"\t";
+        f<<std::fixed <<std::setprecision(precision)<<x<<"\t";
         f<<"\n";
     } 
     f.close();

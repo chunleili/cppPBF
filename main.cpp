@@ -1,11 +1,9 @@
-#include "myPrint.h"
 #include <vector>
 #include <array>
 #include "vec.h"
 #include "MeshIO.hpp"
+#include "myPrint.h"
 
-// using vec3f = std::array<float,3>;
-// using vec3i = std::array<int,3>;
 using namespace zeno;
 
 struct PBF {
@@ -21,6 +19,8 @@ public:
     float rho0 = 1.0;
     float h = 1.1;
     float neighborSearchRadius = h * 1.05;
+    
+    int step = 0; //current step, aka the frame
 
 private:
     void preSolve();
@@ -32,7 +32,7 @@ private:
     void readPoints();
     void initCube();
     void initData();
-    int numParticles = 10000;
+    int numParticles = 100;
     std::vector<vec3f> pos;
     std::vector<vec3f> oldPos;
     std::vector<vec3f> vel;
@@ -52,6 +52,10 @@ private:
     inline float kernelPoly6(float dist, float h);
     inline float computeScorr(const vec3f& distVec);
 
+    void debugPrint();
+    void computeLambda();
+    void computeDpos();
+
     //data for cells
     vec3i numCellXYZ{16,16,16};
     size_t numCell{16*16*16};
@@ -70,6 +74,7 @@ private:
 public:
     void apply() {
         static bool firstTime = true;
+        if(firstTime == true)
         {
             firstTime = false;
             // readPoints();
@@ -77,18 +82,26 @@ public:
             initCube();
         }
 
-        for (size_t step = 0; step < 3; step++)
+        for (step = 0; step < 1; step++)
         {
+            // echo(step);
             preSolve();
             for (size_t i = 0; i < numSubsteps; i++)
                 solve(); 
             postSolve();  
         }
-        printVectorField(pos,"pos.txt");
-        printScalarField(lambda, "lambda.txt");
-        printVectorField(neighborList, "neighborList.txt");
+
     }
 };
+
+void PBF::debugPrint()
+{
+    printVectorField(pos,"pos.txt",16);
+    printVectorField(vel,"vel.txt",16);
+    printScalarField(lambda, "lambda.txt", 16);
+    printVectorField(neighborList, "neighborList.txt");
+    printVectorField(dpos, "dpos.txt",16);
+}
 
 
 void PBF::readPoints()
@@ -160,6 +173,7 @@ void PBF::preSolve()
     for (int i = 0; i < numParticles; i++)
         oldPos[i] = pos[i];
 
+    //update the pos
     for (int i = 0; i < numParticles; i++)
     {
         vec3f tempVel = vel[i];
@@ -284,6 +298,22 @@ void PBF::beBounded(vec3f & p)
 
 void PBF::solve()
 {
+    computeLambda();
+    computeDpos();
+    //apply the dpos to the pos
+    for (size_t i = 0; i < numParticles; i++)
+        pos[i] += dpos[i];
+    
+    std::cout<<"step="<<step<<"\n";
+    printVector(dpos[21],16);
+}
+
+void PBF::computeLambda()
+{
+    //compute lambda
+    // lambda.clear();
+    // lambda.resize(numParticles);
+    float lambdaEpsilon = 100.0; // to prevent the singularity
     for (size_t i = 0; i < numParticles; i++)
     {
         vec3f gradI{0.0, 0.0, 0.0};
@@ -304,14 +334,18 @@ void PBF::solve()
 
         //compute lambda
         sumSqr += dot(gradI, gradI);
-        float lambdaEpsilon = 100.0; // to prevent the singularity
         lambda[i] = (-densityCons) / (sumSqr + lambdaEpsilon);
     }
+}
 
-    //calculate the dpos(delta_pos)
+void PBF::computeDpos()
+{
+    //compute dpos
+    // dpos.clear();
+    // dpos.resize(numParticles);
     for (size_t i = 0; i < numParticles; i++)
     {
-        vec3f dposI{0.0, 0.0, 0.0}; //the distance(vec) of pos[i] to move
+        vec3f dposI{0.0, 0.0, 0.0};
         for (size_t j = 0; j < neighborList[i].size(); j++)
         {
             int pj = neighborList[i][j];
@@ -324,9 +358,6 @@ void PBF::solve()
         dposI /= rho0;
         dpos[i] = dposI;
     }
-
-    for (size_t i = 0; i < numParticles; i++)
-        pos[i] += dpos[i];
 }
 
 //helper for solve()
@@ -336,7 +367,8 @@ inline float PBF::computeScorr(const vec3f& distVec)
     float coeffK = 0.3;
 
     float x = kernelPoly6(length(distVec), h) / kernelPoly6(coeffDq * h, h);
-    x = x * x * x * x;
+    x = x * x;
+    x = x * x;
     return (-coeffK) * x;
 }
 
